@@ -41,7 +41,7 @@ public sealed class CliTests
     private const string Usage =
         "usage:\n" +
         "  dirdrift snapshot [--out FILE] [--ignore PATTERN]... [--jobs N] DIR\n" +
-        "  dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] MANIFEST DIR\n";
+        "  dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] [--sizes] MANIFEST DIR\n";
 
     [Fact]
     public void SnapshotAndDiffMatchTheWorkedExample()
