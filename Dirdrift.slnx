@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Dirdrift/Dirdrift.csproj" />
+    <Project Path="src/Dirdrift.Core/Dirdrift.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Dirdrift.Tests/Dirdrift.Tests.csproj" />
+  </Folder>
+</Solution>

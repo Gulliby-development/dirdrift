@@ -1,0 +1,6 @@
+.baked/
+*.db
+bin/
+obj/
+*.user
+TestResults/
