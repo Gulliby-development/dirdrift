@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Numerics;
 using System.Security;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -10,7 +11,7 @@ public static class Program
     private const string Usage =
         "usage:\n" +
         "  dirdrift snapshot [--out FILE] [--ignore PATTERN]... [--jobs N] DIR\n" +
-        "  dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] MANIFEST DIR";
+        "  dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] [--sizes] MANIFEST DIR";
 
     public static int Main(string[] args)
     {
@@ -137,7 +138,13 @@ public static class Program
             }
             else
             {
-                WriteTextDiff(stdout, diff);
+                var manifestSizes = options.Sizes
+                    ? filteredManifestFiles.ToDictionary(file => file.Path, file => file.Size, StringComparer.Ordinal)
+                    : null;
+                var currentSizes = options.Sizes
+                    ? currentFiles.ToDictionary(file => file.Path, file => file.Size, StringComparer.Ordinal)
+                    : null;
+                WriteTextDiff(stdout, diff, manifestSizes, currentSizes);
             }
 
             return diff.ChangeCount == 0 ? 0 : 1;
@@ -203,6 +210,10 @@ public static class Program
                     }
 
                     options.Format = format;
+                    break;
+
+                case "--sizes" when !isSnapshot && !hasInlineValue:
+                    options.Sizes = true;
                     break;
 
                 default:
@@ -281,10 +292,20 @@ public static class Program
             }
         }
 
+        if (options.Sizes && options.Format == "json")
+        {
+            error = "dirdrift: --sizes needs --format text";
+            return false;
+        }
+
         return true;
     }
 
-    private static void WriteTextDiff(TextWriter stdout, DiffResult diff)
+    private static void WriteTextDiff(
+        TextWriter stdout,
+        DiffResult diff,
+        IReadOnlyDictionary<string, long>? manifestSizes,
+        IReadOnlyDictionary<string, long>? currentSizes)
     {
         if (diff.ChangeCount == 0)
         {
@@ -293,14 +314,57 @@ public static class Program
         }
 
         var lines = new List<string>();
-        lines.AddRange(diff.Renamed.Select(rename => $"{"renamed".PadRight(9)}{rename.From} -> {rename.To}"));
-        lines.AddRange(diff.Modified.Select(path => $"{"modified".PadRight(9)}{path}"));
-        lines.AddRange(diff.Added.Select(path => $"{"added".PadRight(9)}{path}"));
-        lines.AddRange(diff.Removed.Select(path => $"{"removed".PadRight(9)}{path}"));
-        lines.Add($"{diff.ChangeCount} {(diff.ChangeCount == 1 ? "change" : "changes")}");
+        if (manifestSizes is null || currentSizes is null)
+        {
+            lines.AddRange(diff.Renamed.Select(rename => $"{"renamed".PadRight(9)}{rename.From} -> {rename.To}"));
+            lines.AddRange(diff.Modified.Select(path => $"{"modified".PadRight(9)}{path}"));
+            lines.AddRange(diff.Added.Select(path => $"{"added".PadRight(9)}{path}"));
+            lines.AddRange(diff.Removed.Select(path => $"{"removed".PadRight(9)}{path}"));
+            lines.Add($"{diff.ChangeCount} {(diff.ChangeCount == 1 ? "change" : "changes")}");
+        }
+        else
+        {
+            var netChange = BigInteger.Zero;
+            foreach (var rename in diff.Renamed)
+            {
+                lines.Add($"{"renamed".PadRight(9)}{rename.From} -> {rename.To} ({FormatBytes(currentSizes[rename.To])} B)");
+            }
+
+            foreach (var path in diff.Modified)
+            {
+                var oldSize = manifestSizes[path];
+                var newSize = currentSizes[path];
+                var difference = new BigInteger(newSize) - oldSize;
+                netChange += difference;
+                lines.Add($"{"modified".PadRight(9)}{path} ({FormatBytes(oldSize)} -> {FormatBytes(newSize)} B, {FormatSignedBytes(difference)})");
+            }
+
+            foreach (var path in diff.Added)
+            {
+                var size = currentSizes[path];
+                netChange += size;
+                lines.Add($"{"added".PadRight(9)}{path} ({FormatBytes(size)} B)");
+            }
+
+            foreach (var path in diff.Removed)
+            {
+                var size = manifestSizes[path];
+                netChange -= size;
+                lines.Add($"{"removed".PadRight(9)}{path} ({FormatBytes(size)} B)");
+            }
+
+            lines.Add($"{diff.ChangeCount} {(diff.ChangeCount == 1 ? "change" : "changes")}, net {FormatSignedBytes(netChange)} B");
+        }
+
         stdout.Write(string.Join('\n', lines));
         stdout.Write('\n');
     }
+
+    private static string FormatBytes(long size) =>
+        size.ToString(CultureInfo.InvariantCulture);
+
+    private static string FormatSignedBytes(BigInteger value) =>
+        $"{(value.Sign >= 0 ? "+" : string.Empty)}{value.ToString(CultureInfo.InvariantCulture)}";
 
     private static void WriteJsonDiff(TextWriter stdout, DiffResult diff)
     {
@@ -385,6 +449,8 @@ public static class Program
         public int Jobs { get; set; } = 4;
 
         public string Format { get; set; } = "text";
+
+        public bool Sizes { get; set; }
     }
 }
 

@@ -25,7 +25,7 @@ dotnet src/Dirdrift/bin/Release/net10.0/dirdrift.dll snapshot ./site
 ```text
 usage:
   dirdrift snapshot [--out FILE] [--ignore PATTERN]... [--jobs N] DIR
-  dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] MANIFEST DIR
+  dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] [--sizes] MANIFEST DIR
 ```
 
 Options can appear anywhere in the command arguments. Both `--option VALUE` and `--option=VALUE` are accepted. `--jobs` is between 1 and 32 (default 4); `--format` is `text` (default) or `json`. A snapshot is printed to standard output unless `--out` names a file.
@@ -83,6 +83,20 @@ removed  gone.txt
 ```
 
 Pass `--format json` to produce a compact, single-line JSON result instead.
+
+## Sizes in the text diff
+
+Pass `--sizes` to include byte counts in the text report. In the earlier folder comparison, the updated `src/app.cs` has 7 bytes and the new `notes.txt` has 4 bytes; the output is:
+
+```text
+renamed  docs/old.md -> docs/new.md (6 B)
+modified src/app.cs (4 -> 7 B, +3)
+added    notes.txt (4 B)
+removed  gone.txt (4 B)
+4 changes, net +3 B
+```
+
+Each line shows the byte size of a renamed, added, or removed file, or the old and current sizes plus their signed difference for a modified file. The final `net` total adds new-file sizes and modified-file size differences, then subtracts removed-file sizes; renames contribute zero. The count uses `change` for one change and `changes` otherwise. `--sizes` is available only for `diff` and cannot be combined with `--format json`. Without `--sizes`, the text output is unchanged.
 
 ## Ignore patterns
 
