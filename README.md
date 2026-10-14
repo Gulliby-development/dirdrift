@@ -24,7 +24,7 @@ dotnet src/Dirdrift/bin/Release/net10.0/dirdrift.dll snapshot ./site
 
 ```text
 usage:
-  dirdrift snapshot [--out FILE] [--ignore PATTERN]... [--jobs N] DIR
+  dirdrift snapshot [--out FILE] [--ignore PATTERN]... [--jobs N] [--summary] DIR
   dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] [--sizes] MANIFEST DIR
 ```
 
@@ -97,6 +97,22 @@ removed  gone.txt (4 B)
 ```
 
 Each line shows the byte size of a renamed, added, or removed file, or the old and current sizes plus their signed difference for a modified file. The final `net` total adds new-file sizes and modified-file size differences, then subtracts removed-file sizes; renames contribute zero. The count uses `change` for one change and `changes` otherwise. `--sizes` is available only for `diff` and cannot be combined with `--format json`. Without `--sizes`, the text output is unchanged.
+
+## Snapshot summary
+
+Pass `--summary` to `snapshot` to print one line on standard error with the number of files in the snapshot and their total size in bytes, after the manifest has been written. The manifest itself is unchanged and still goes to standard output, or to the file named by `--out`. For the folder of the earlier example:
+
+```sh
+dirdrift snapshot --summary --out before.json ./site
+```
+
+the line on standard error is:
+
+```text
+4 files, 16 bytes
+```
+
+The wording is `1 file` for one file and `1 byte` for one byte, `0 files, 0 bytes` for an empty folder. Only files that the ignore patterns keep are counted. `--summary` is available only for `snapshot`; nothing is printed when the snapshot fails.
 
 ## Ignore patterns
 

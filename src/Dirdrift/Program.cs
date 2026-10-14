@@ -10,7 +10,7 @@ public static class Program
 {
     private const string Usage =
         "usage:\n" +
-        "  dirdrift snapshot [--out FILE] [--ignore PATTERN]... [--jobs N] DIR\n" +
+        "  dirdrift snapshot [--out FILE] [--ignore PATTERN]... [--jobs N] [--summary] DIR\n" +
         "  dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] [--sizes] MANIFEST DIR";
 
     public static int Main(string[] args)
@@ -124,6 +124,17 @@ public static class Program
                     }
                 }
 
+                if (options.Summary)
+                {
+                    var fileCount = currentFiles.Count;
+                    var totalBytes = currentFiles.Aggregate(BigInteger.Zero, (total, file) => total + file.Size);
+                    var fileLabel = fileCount == 1 ? "file" : "files";
+                    var byteLabel = totalBytes == BigInteger.One ? "byte" : "bytes";
+                    WriteLineLf(
+                        stderr,
+                        $"{fileCount.ToString(CultureInfo.InvariantCulture)} {fileLabel}, {totalBytes.ToString(CultureInfo.InvariantCulture)} {byteLabel}");
+                }
+
                 return 0;
             }
 
@@ -176,6 +187,10 @@ public static class Program
 
             switch (optionName)
             {
+                case "--summary" when isSnapshot && !hasInlineValue:
+                    options.Summary = true;
+                    break;
+
                 case "--out" when isSnapshot:
                     if (!TryReadValue(args, ref index, optionName, hasInlineValue, inlineValue, out var outputPath, out error))
                     {
@@ -451,6 +466,8 @@ public static class Program
         public string Format { get; set; } = "text";
 
         public bool Sizes { get; set; }
+
+        public bool Summary { get; set; }
     }
 }
 
