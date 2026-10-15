@@ -206,7 +206,7 @@ public sealed class SizesTests
         var readme = NormalizeNewlines(File.ReadAllText(Path.Combine(repositoryRoot, "README.md")));
 
         Assert.Contains(
-            "dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] [--sizes] MANIFEST DIR",
+            "dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] [--sizes] [--only KINDS] MANIFEST DIR",
             readme);
         Assert.Contains("## Sizes in the text diff", readme);
         Assert.Contains(WorkedExampleReport.TrimEnd('\n'), readme);

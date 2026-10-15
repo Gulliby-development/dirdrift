@@ -11,7 +11,7 @@ public static class Program
     private const string Usage =
         "usage:\n" +
         "  dirdrift snapshot [--out FILE] [--ignore PATTERN]... [--jobs N] [--summary] DIR\n" +
-        "  dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] [--sizes] MANIFEST DIR";
+        "  dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] [--sizes] [--only KINDS] MANIFEST DIR";
 
     public static int Main(string[] args)
     {
@@ -142,6 +142,15 @@ public static class Program
                 .Where(file => !Glob.IsIgnored(file.Path, scanner.EffectiveIgnorePatterns))
                 .ToArray();
             var diff = Differ.Compare(filteredManifestFiles, currentFiles);
+            if (options.OnlyKinds is not null)
+            {
+                var selectedKinds = options.OnlyKinds.Split(',').ToHashSet(StringComparer.Ordinal);
+                diff = new DiffResult(
+                    selectedKinds.Contains("renamed") ? diff.Renamed : Array.Empty<FileRename>(),
+                    selectedKinds.Contains("modified") ? diff.Modified : Array.Empty<string>(),
+                    selectedKinds.Contains("added") ? diff.Added : Array.Empty<string>(),
+                    selectedKinds.Contains("removed") ? diff.Removed : Array.Empty<string>());
+            }
 
             if (options.Format == "json")
             {
@@ -231,6 +240,15 @@ public static class Program
                     options.Sizes = true;
                     break;
 
+                case "--only" when !isSnapshot:
+                    if (!TryReadValue(args, ref index, optionName, hasInlineValue, inlineValue, out var onlyKinds, out error))
+                    {
+                        return options;
+                    }
+
+                    options.OnlyKinds = onlyKinds;
+                    break;
+
                 default:
                     if (argument.StartsWith("-", StringComparison.Ordinal))
                     {
@@ -305,6 +323,13 @@ public static class Program
                 error = $"dirdrift: invalid --ignore \"{pattern}\"";
                 return false;
             }
+        }
+
+        if (options.OnlyKinds is not null
+            && options.OnlyKinds.Split(',').Any(kind => kind is not ("added" or "removed" or "modified" or "renamed")))
+        {
+            error = $"dirdrift: invalid --only \"{options.OnlyKinds}\"";
+            return false;
         }
 
         if (options.Sizes && options.Format == "json")
@@ -466,6 +491,8 @@ public static class Program
         public string Format { get; set; } = "text";
 
         public bool Sizes { get; set; }
+
+        public string? OnlyKinds { get; set; }
 
         public bool Summary { get; set; }
     }

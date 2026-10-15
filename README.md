@@ -25,7 +25,7 @@ dotnet src/Dirdrift/bin/Release/net10.0/dirdrift.dll snapshot ./site
 ```text
 usage:
   dirdrift snapshot [--out FILE] [--ignore PATTERN]... [--jobs N] [--summary] DIR
-  dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] [--sizes] MANIFEST DIR
+  dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] [--sizes] [--only KINDS] MANIFEST DIR
 ```
 
 Options can appear anywhere in the command arguments. Both `--option VALUE` and `--option=VALUE` are accepted. `--jobs` is between 1 and 32 (default 4); `--format` is `text` (default) or `json`. A snapshot is printed to standard output unless `--out` names a file.
@@ -97,6 +97,22 @@ removed  gone.txt (4 B)
 ```
 
 Each line shows the byte size of a renamed, added, or removed file, or the old and current sizes plus their signed difference for a modified file. The final `net` total adds new-file sizes and modified-file size differences, then subtracts removed-file sizes; renames contribute zero. The count uses `change` for one change and `changes` otherwise. `--sizes` is available only for `diff` and cannot be combined with `--format json`. Without `--sizes`, the text output is unchanged.
+
+## Selecting kinds of change
+
+Pass `--only KINDS` to `diff` to report only some kinds of change. `KINDS` is a comma-separated list of `added`, `removed`, `modified` and `renamed` (lowercase; a kind may be repeated). The other kinds are left out of the text report, the JSON lists, the `--sizes` figures and the change count, and the exit code is 1 only when a selected kind has a change; when none has, the output is `no drift` and the exit code is 0. Renames are paired before the selection, so `--only added` does not list the new path of a renamed file. `--only` is available only for `diff`. For the folder of the earlier example:
+
+```sh
+dirdrift diff --only added,removed before.json ./site
+```
+
+prints:
+
+```text
+added    notes.txt
+removed  gone.txt
+2 changes
+```
 
 ## Snapshot summary
 
