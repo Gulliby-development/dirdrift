@@ -130,6 +130,22 @@ the line on standard error is:
 
 The wording is `1 file` for one file and `1 byte` for one byte, `0 files, 0 bytes` for an empty folder. Only files that the ignore patterns keep are counted. `--summary` is available only for `snapshot`; nothing is printed when the snapshot fails.
 
+## Version
+
+Pass `--version` as the only argument to print the program name and its version on standard output and exit with 0:
+
+```sh
+dirdrift --version
+```
+
+prints:
+
+```text
+dirdrift 0.2.0
+```
+
+The number is the `<Version>` of `src/Dirdrift/Dirdrift.csproj`. The usage text printed by `--help` is unchanged.
+
 ## Ignore patterns
 
 Use `--ignore PATTERN` one or more times, or put patterns in the root `.dirdriftignore` file. Blank lines and lines beginning with `#` are ignored. Patterns are case-sensitive; leading and trailing slashes control anchoring and directory-only matching. A one-segment unanchored pattern matches names at any depth. Patterns with multiple segments, and anchored patterns, match from the root. `*` matches any number of characters other than `/`, and `?` matches one character. A segment exactly equal to `**` matches whole path segments; for example, `src/**/gen` matches `gen` directories below `src`, and `a/**` matches descendants of `a` but not `a` itself.

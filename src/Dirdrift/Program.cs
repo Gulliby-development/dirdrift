@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Numerics;
+using System.Reflection;
 using System.Security;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -43,6 +44,12 @@ public static class Program
         ArgumentNullException.ThrowIfNull(args);
         ArgumentNullException.ThrowIfNull(stdout);
         ArgumentNullException.ThrowIfNull(stderr);
+
+        if (args.Length == 1 && args[0] == "--version")
+        {
+            WriteLineLf(stdout, GetVersionText());
+            return 0;
+        }
 
         if (args.Length == 1 && args[0] == "--help")
         {
@@ -467,6 +474,19 @@ public static class Program
     {
         writer.Write(message);
         writer.Write('\n');
+    }
+
+    private static string GetVersionText()
+    {
+        var version = typeof(Program).Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? string.Empty;
+        var revisionIndex = version.IndexOf('+');
+        if (revisionIndex >= 0)
+        {
+            version = version[..revisionIndex];
+        }
+
+        return $"dirdrift {version}";
     }
 
     private static bool IsFileSystemFailure(Exception exception) =>
