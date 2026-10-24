@@ -171,7 +171,7 @@ public static class Program
                 var currentSizes = options.Sizes
                     ? currentFiles.ToDictionary(file => file.Path, file => file.Size, StringComparer.Ordinal)
                     : null;
-                WriteTextDiff(stdout, diff, manifestSizes, currentSizes);
+                WriteTextDiff(stdout, diff, manifestSizes, currentSizes, options.Visible);
             }
 
             return diff.ChangeCount == 0 ? 0 : 1;
@@ -245,6 +245,10 @@ public static class Program
 
                 case "--sizes" when !isSnapshot && !hasInlineValue:
                     options.Sizes = true;
+                    break;
+
+                case "--visible" when !isSnapshot && !hasInlineValue:
+                    options.Visible = true;
                     break;
 
                 case "--only" when !isSnapshot:
@@ -345,6 +349,12 @@ public static class Program
             return false;
         }
 
+        if (options.Visible && options.Format == "json")
+        {
+            error = "dirdrift: --visible needs --format text";
+            return false;
+        }
+
         return true;
     }
 
@@ -352,7 +362,8 @@ public static class Program
         TextWriter stdout,
         DiffResult diff,
         IReadOnlyDictionary<string, long>? manifestSizes,
-        IReadOnlyDictionary<string, long>? currentSizes)
+        IReadOnlyDictionary<string, long>? currentSizes,
+        bool visible)
     {
         if (diff.ChangeCount == 0)
         {
@@ -360,13 +371,15 @@ public static class Program
             return;
         }
 
+        string Shown(string path) => visible ? VisiblePath.Show(path) : path;
+
         var lines = new List<string>();
         if (manifestSizes is null || currentSizes is null)
         {
-            lines.AddRange(diff.Renamed.Select(rename => $"{"renamed".PadRight(9)}{rename.From} -> {rename.To}"));
-            lines.AddRange(diff.Modified.Select(path => $"{"modified".PadRight(9)}{path}"));
-            lines.AddRange(diff.Added.Select(path => $"{"added".PadRight(9)}{path}"));
-            lines.AddRange(diff.Removed.Select(path => $"{"removed".PadRight(9)}{path}"));
+            lines.AddRange(diff.Renamed.Select(rename => $"{"renamed".PadRight(9)}{Shown(rename.From)} -> {Shown(rename.To)}"));
+            lines.AddRange(diff.Modified.Select(path => $"{"modified".PadRight(9)}{Shown(path)}"));
+            lines.AddRange(diff.Added.Select(path => $"{"added".PadRight(9)}{Shown(path)}"));
+            lines.AddRange(diff.Removed.Select(path => $"{"removed".PadRight(9)}{Shown(path)}"));
             lines.Add($"{diff.ChangeCount} {(diff.ChangeCount == 1 ? "change" : "changes")}");
         }
         else
@@ -374,7 +387,7 @@ public static class Program
             var netChange = BigInteger.Zero;
             foreach (var rename in diff.Renamed)
             {
-                lines.Add($"{"renamed".PadRight(9)}{rename.From} -> {rename.To} ({FormatBytes(currentSizes[rename.To])} B)");
+                lines.Add($"{"renamed".PadRight(9)}{Shown(rename.From)} -> {Shown(rename.To)} ({FormatBytes(currentSizes[rename.To])} B)");
             }
 
             foreach (var path in diff.Modified)
@@ -383,21 +396,21 @@ public static class Program
                 var newSize = currentSizes[path];
                 var difference = new BigInteger(newSize) - oldSize;
                 netChange += difference;
-                lines.Add($"{"modified".PadRight(9)}{path} ({FormatBytes(oldSize)} -> {FormatBytes(newSize)} B, {FormatSignedBytes(difference)})");
+                lines.Add($"{"modified".PadRight(9)}{Shown(path)} ({FormatBytes(oldSize)} -> {FormatBytes(newSize)} B, {FormatSignedBytes(difference)})");
             }
 
             foreach (var path in diff.Added)
             {
                 var size = currentSizes[path];
                 netChange += size;
-                lines.Add($"{"added".PadRight(9)}{path} ({FormatBytes(size)} B)");
+                lines.Add($"{"added".PadRight(9)}{Shown(path)} ({FormatBytes(size)} B)");
             }
 
             foreach (var path in diff.Removed)
             {
                 var size = manifestSizes[path];
                 netChange -= size;
-                lines.Add($"{"removed".PadRight(9)}{path} ({FormatBytes(size)} B)");
+                lines.Add($"{"removed".PadRight(9)}{Shown(path)} ({FormatBytes(size)} B)");
             }
 
             lines.Add($"{diff.ChangeCount} {(diff.ChangeCount == 1 ? "change" : "changes")}, net {FormatSignedBytes(netChange)} B");
@@ -515,6 +528,8 @@ public static class Program
         public string? OnlyKinds { get; set; }
 
         public bool Summary { get; set; }
+
+        public bool Visible { get; set; }
     }
 }
 
