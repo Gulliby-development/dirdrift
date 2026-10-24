@@ -112,7 +112,7 @@ public sealed class VersionTests
                 "The number is the `<Version>` of `src/Dirdrift/Dirdrift.csproj`. The usage text printed by `--help` is unchanged."
             ]);
 
-        Assert.Contains($"{expectedSection}\n\n## Ignore patterns", readme);
+        Assert.Contains($"{expectedSection}\n\n## Invisible characters in paths\n\n", readme);
     }
 
     private static (int ExitCode, string Stdout, string Stderr) Run(string[] args, string newLine = "\n")

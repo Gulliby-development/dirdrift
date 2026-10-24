@@ -146,6 +146,21 @@ dirdrift 0.2.0
 
 The number is the `<Version>` of `src/Dirdrift/Dirdrift.csproj`. The usage text printed by `--help` is unchanged.
 
+## Invisible characters in paths
+
+Pass `--visible` to `diff` to spell out the invisible characters of paths in the text report. Each character of a fixed set is written as `<U+`, its four uppercase hexadecimal digits and `>`: U+0000 to U+001F and U+007F to U+00A0 (controls such as TAB and CR, NEL and the no-break space), U+00AD (soft hyphen), U+2000 to U+200F (spaces and zero-width characters), U+2028 to U+202F (line and paragraph separators, bidirectional controls), U+205F to U+2064, U+3000 and U+FEFF. Every other character, an emoji or the text `<U+200B>` itself included, is written as it is. `--visible` is available only for `diff`, works with `--sizes` and `--only`, and cannot be combined with `--format json`. If `before.json` lists the path `a`, a zero-width space and `b.txt`, and the folder no longer has it:
+
+```sh
+dirdrift diff --visible before.json ./site
+```
+
+prints:
+
+```text
+removed  a<U+200B>b.txt
+1 change
+```
+
 ## Ignore patterns
 
 Use `--ignore PATTERN` one or more times, or put patterns in the root `.dirdriftignore` file. Blank lines and lines beginning with `#` are ignored. Patterns are case-sensitive; leading and trailing slashes control anchoring and directory-only matching. A one-segment unanchored pattern matches names at any depth. Patterns with multiple segments, and anchored patterns, match from the root. `*` matches any number of characters other than `/`, and `?` matches one character. A segment exactly equal to `**` matches whole path segments; for example, `src/**/gen` matches `gen` directories below `src`, and `a/**` matches descendants of `a` but not `a` itself.
