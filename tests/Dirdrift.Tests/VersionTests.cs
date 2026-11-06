@@ -5,7 +5,7 @@ public sealed class VersionTests
     private const string Usage =
         "usage:\n" +
         "  dirdrift snapshot [--out FILE] [--ignore PATTERN]... [--jobs N] [--summary] DIR\n" +
-        "  dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] [--sizes] [--only KINDS] MANIFEST DIR\n";
+        "  dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] [--sizes] [--only KINDS] [--quiet] MANIFEST DIR\n";
 
     [Fact]
     public void StandaloneVersionWritesTheVersionAndReturnsSuccess()

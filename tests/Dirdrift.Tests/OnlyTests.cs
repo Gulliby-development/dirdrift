@@ -422,7 +422,7 @@ public sealed class OnlyTests
         Assert.Equal(
             "usage:\n" +
             "  dirdrift snapshot [--out FILE] [--ignore PATTERN]... [--jobs N] [--summary] DIR\n" +
-            "  dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] [--sizes] [--only KINDS] MANIFEST DIR\n",
+            "  dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] [--sizes] [--only KINDS] [--quiet] MANIFEST DIR\n",
             help.Stdout);
         Assert.Equal(string.Empty, help.Stderr);
         AssertLf(help.Stdout);
@@ -430,7 +430,7 @@ public sealed class OnlyTests
         var repositoryRoot = FindRepositoryRoot();
         var readme = NormalizeNewlines(File.ReadAllText(Path.Combine(repositoryRoot, "README.md")));
         Assert.Contains(
-            "  dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] [--sizes] [--only KINDS] MANIFEST DIR",
+            "  dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] [--sizes] [--only KINDS] [--quiet] MANIFEST DIR",
             readme);
         var sectionStart = readme.IndexOf(SelectingKindsReadmeSection, StringComparison.Ordinal);
         Assert.True(sectionStart >= 0, "The complete selected-kinds section must match the requested text.");
