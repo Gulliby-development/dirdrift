@@ -12,7 +12,7 @@ public static class Program
     private const string Usage =
         "usage:\n" +
         "  dirdrift snapshot [--out FILE] [--ignore PATTERN]... [--jobs N] [--summary] DIR\n" +
-        "  dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] [--sizes] [--only KINDS] MANIFEST DIR";
+        "  dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] [--sizes] [--only KINDS] [--quiet] MANIFEST DIR";
 
     public static int Main(string[] args)
     {
@@ -159,6 +159,11 @@ public static class Program
                     selectedKinds.Contains("removed") ? diff.Removed : Array.Empty<string>());
             }
 
+            if (options.Quiet)
+            {
+                return diff.ChangeCount == 0 ? 0 : 1;
+            }
+
             if (options.Format == "json")
             {
                 WriteJsonDiff(stdout, diff);
@@ -249,6 +254,10 @@ public static class Program
 
                 case "--visible" when !isSnapshot && !hasInlineValue:
                     options.Visible = true;
+                    break;
+
+                case "--quiet" when !isSnapshot && !hasInlineValue:
+                    options.Quiet = true;
                     break;
 
                 case "--only" when !isSnapshot:
@@ -530,6 +539,8 @@ public static class Program
         public bool Summary { get; set; }
 
         public bool Visible { get; set; }
+
+        public bool Quiet { get; set; }
     }
 }
 

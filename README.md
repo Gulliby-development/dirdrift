@@ -25,7 +25,7 @@ dotnet src/Dirdrift/bin/Release/net10.0/dirdrift.dll snapshot ./site
 ```text
 usage:
   dirdrift snapshot [--out FILE] [--ignore PATTERN]... [--jobs N] [--summary] DIR
-  dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] [--sizes] [--only KINDS] MANIFEST DIR
+  dirdrift diff [--ignore PATTERN]... [--jobs N] [--format text|json] [--sizes] [--only KINDS] [--quiet] MANIFEST DIR
 ```
 
 Options can appear anywhere in the command arguments. Both `--option VALUE` and `--option=VALUE` are accepted. `--jobs` is between 1 and 32 (default 4); `--format` is `text` (default) or `json`. A snapshot is printed to standard output unless `--out` names a file.
@@ -160,6 +160,16 @@ prints:
 removed  a<U+200B>b.txt
 1 change
 ```
+
+## Quiet diff
+
+Pass `--quiet` to `diff` to print nothing on standard output, neither the text report nor the JSON result; the exit code says whether there is drift. It is `0` when there is no drift and `1` when there is drift, as without the option, and it follows `--only`, so `--only added --quiet` is `1` only when a file was added. Errors are still written to standard error with the exit code `2`. `--quiet` is available only for `diff`, takes no value, and can be combined with every other option of `diff`; the other options are checked as before, so `--quiet --sizes --format json` is still an error. In a script:
+
+```sh
+dirdrift diff --quiet before.json ./site || echo "the folder changed"
+```
+
+prints `the folder changed` when the folder differs from `before.json`, and nothing otherwise.
 
 ## Ignore patterns
 
